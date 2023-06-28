@@ -1,3 +1,6 @@
+
+DROP TABLE sales CASCADE;
+
 CREATE TABLE sales(
    customer_id varchar(1),
    order_date date,
@@ -5,5 +8,6 @@ CREATE TABLE sales(
    foreign key(customer_id) references members (customer_id),
    foreign key(product_id) references menu(product_id)
 )
+
 
 

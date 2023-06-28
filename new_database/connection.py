@@ -1,52 +1,48 @@
 import psycopg2
 from config import config
 
-class DatabaseConnection:
+class Connection: 
     def __init__(self):
-        self.conn = None
-        self.cur = None
+        self.connection = None
+        self.cursor = None
 
-    def connect(self):
-        """ Connect to the PostgreSQL database server """
-        try:
-            # read connection parameters
-            params = config()
+    def __enter__(self):
+        params = config()
+        self.connection = psycopg2.connect(**params)
+        self.cursor = self.connection.cursor()
+        return self
 
-            # connect to the PostgreSQL server
-            print('Connecting to the PostgreSQL database...')
-            self.conn = psycopg2.connect(**params)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.connection.commit()
+        self.cursor.close()
+        self.connection.close()
 
-            # create a cursor
-            self.cur = self.conn.cursor()
+    def read_file(self, file_path):
+        with open(file_path, 'r') as file:
+            return file.read()
 
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-            raise
+    def create_table(self, file_path):
+        sql_query = self.read_file(file_path)
+        self.cursor.execute(sql_query)
+    
+    def execute_member_insertions(self, file_path):
+        sql_query = self.read_file(file_path)
+        self.cursor.execute(sql_query)
 
-    def execute_query(self, query):
-        """ Execute SQL query """
-        try:
-            self.cur.execute(query)
-            self.conn.commit()
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-            self.conn.rollback()
-            raise
+    def insert_data(self, file_path, table_name):
+        with open(file_path, 'r') as file:
+            next(file)  # Skip header
+            self.cursor.copy_from(file, table_name, sep=',')
 
-    def fetch_data(self, query):
-        """ Fetch data from the database """
-        try:
-            self.cur.execute(query)
-            rows = self.cur.fetchall()
-            return rows
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
-            raise
+    def execute_fetch_queries(self, file_path):
+        fetch_sql = self.read_file(file_path)
+        queries = fetch_sql.split(';')
 
-    def close(self):
-        """ Close the database connection """
-        if self.cur is not None:
-            self.cur.close()
-        if self.conn is not None:
-            self.conn.close()
-            print('Database connection closed.')
+        for query in queries:
+            if query.strip():
+                self.cursor.execute(query)
+                rows = self.cursor.fetchall()
+                print("Answers for each query:")
+                for row in rows:
+                    print(row)
+                print()

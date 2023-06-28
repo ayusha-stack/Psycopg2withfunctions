@@ -8,18 +8,21 @@ GROUP BY members.customer_id;
 
 --How many days has each customer visited the restaurant?
 
-SELECT members.customer_id, count(DISTINCT order_date) as visited_days
+SELECT customer_id, COUNT(DISTINCT order_date) AS total_visit
 FROM sales
-GROUP BY memebrs.customer_id 
-ORDER BY members.customer_id
+GROUP BY customer_id;
 ;
 
 --What was the first item from the menu purchased by customer A?
-SELECT m.customer_id, MIN(s.order_date), n.product_name
-FROM sales s
-JOIN members m ON s.customer_id = m.customer_id
-JOIN menu n ON s.product_id = n.product_id
-WHERE m.customer_id = 'A';
+SELECT menu.product_name, sales.order_date AS first_purchase_date
+    FROM sales
+    JOIN menu ON sales.product_id = menu.product_id
+    WHERE sales.customer_id = 'A'
+    AND sales.order_date = (
+        SELECT MIN(order_date)
+        FROM sales
+        WHERE customer_id = 'A'
+    );
 
 --What is the most purchased item on the menu and how many times was it purchased by all customers?
 
@@ -27,11 +30,12 @@ SELECT m.product_name, COUNT(*) AS total_purchases
 FROM sales s
 JOIN menu m ON s.product_id = m.product_id
 GROUP BY m.product_name
-ORDER BY total_purchases DESC;
+ORDER BY total_purchases DESC
+LIMIT 1;
 
 --Which item was the most popular for each customer?
 
-SELECT s.customer_id, m.product_name AS most_popular_item
+SELECT subquery.customer_id, m.product_name AS most_popular_item
 FROM
   (
     SELECT customer_id, product_id,

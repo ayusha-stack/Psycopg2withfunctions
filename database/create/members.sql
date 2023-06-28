@@ -1,8 +1,12 @@
+
+DROP TABLE members CASCADE ;
+
 CREATE TABLE members(
-    customer_id varchar(1),
-    join_date timestamp, 
-    primary key (customer_id)
+    customer_id varchar(1) PRIMARY KEY,
+    join_date timestamp
 );
+
+
 
 
 

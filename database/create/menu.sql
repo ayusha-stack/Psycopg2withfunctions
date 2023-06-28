@@ -1,3 +1,5 @@
+DROP TABLE menu CASCADE;
+
 CREATE TABLE menu(
     product_id integer,
     product_name varchar(5),
