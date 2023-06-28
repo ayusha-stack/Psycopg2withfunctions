@@ -1,48 +1,88 @@
 import psycopg2
+from psycopg2 import sql
+from psycopg2.extras import DictCursor
 from config import config
 
-class Connection: 
-    def __init__(self):
-        self.connection = None
-        self.cursor = None
+class Connection:
+    @staticmethod
+    def connect():
+        """ Connect to the PostgreSQL database server """
+        conn = None
+        try:
+            # read connection parameters
+            params = config()
 
-    def __enter__(self):
-        params = config()
-        self.connection = psycopg2.connect(**params)
-        self.cursor = self.connection.cursor()
-        return self
+            # connect to the PostgreSQL server
+            print('Connecting to the PostgreSQL database...')
+            conn = psycopg2.connect(**params)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.connection.commit()
-        self.cursor.close()
-        self.connection.close()
+            return conn
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
 
-    def read_file(self, file_path):
+    @staticmethod
+    def read_file(file_path):
+        """ Read the contents of a file """
         with open(file_path, 'r') as file:
             return file.read()
 
-    def create_table(self, file_path):
-        sql_query = self.read_file(file_path)
-        self.cursor.execute(sql_query)
-    
-    def execute_member_insertions(self, file_path):
-        sql_query = self.read_file(file_path)
-        self.cursor.execute(sql_query)
+    @staticmethod
+    def execute_query(conn, query):
+        """ Execute a query on the database """
+        try:
+            cur = conn.cursor()
+            cur.execute(query)
+            conn.commit()
+            cur.close()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
 
-    def insert_data(self, file_path, table_name):
-        with open(file_path, 'r') as file:
-            next(file)  # Skip header
-            self.cursor.copy_from(file, table_name, sep=',')
+    @staticmethod
+    def fetch_data(conn, query):
+        """ Fetch data from the database """
+        try:
+            cur = conn.cursor(cursor_factory=DictCursor)
+            cur.execute(query)
+            rows = cur.fetchall()
+            cur.close()
+            return rows
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+            
+    @staticmethod
+    def execute_member_insertions(conn, file_path):
+        """ Execute member insertions """
+        sql_query = Connection.read_file(file_path)
+        Connection.execute_query(conn, sql_query)
 
-    def execute_fetch_queries(self, file_path):
-        fetch_sql = self.read_file(file_path)
-        queries = fetch_sql.split(';')
 
-        for query in queries:
-            if query.strip():
-                self.cursor.execute(query)
-                rows = self.cursor.fetchall()
-                print("Answers for each query:")
-                for row in rows:
-                    print(row)
-                print()
+    @staticmethod
+    def insert_data(conn, table_name, file_path):
+        """ Insert data into a table from a file """
+        try:
+            with open(file_path, 'r') as file:
+                cur = conn.cursor()
+                next(file)
+                cur.copy_from(file, table_name, sep=',')
+                conn.commit()
+                cur.close()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    @staticmethod
+    def create_table(conn, file_path):
+        """ Create a table in the database """
+        try:
+            create_table_query = Connection.read_file(file_path)
+            cur = conn.cursor()
+            cur.execute(create_table_query)
+            conn.commit()
+            cur.close()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+
+    @staticmethod
+    def execute_member_insertions(conn, file_path):
+        """ Execute member insertions """
+        sql_query = Connection.read_file(file_path)
+        Connection.execute_query(conn, sql_query)
