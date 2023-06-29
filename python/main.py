@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import psycopg2
-from new_database.config import config
+from config import config
 from psycopg2 import sql
 
 def connect():

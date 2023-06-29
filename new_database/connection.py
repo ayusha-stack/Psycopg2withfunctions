@@ -21,12 +21,6 @@ class Connection:
             print(error)
 
     @staticmethod
-    def read_file(file_path):
-        """ Read the contents of a file """
-        with open(file_path, 'r') as file:
-            return file.read()
-
-    @staticmethod
     def execute_query(conn, query):
         """ Execute a query on the database """
         try:
@@ -52,8 +46,9 @@ class Connection:
     @staticmethod
     def execute_member_insertions(conn, file_path):
         """ Execute member insertions """
-        sql_query = Connection.read_file(file_path)
-        Connection.execute_query(conn, sql_query)
+        with open(file_path, 'r') as file:
+            sql_query = file.read()
+            Connection.execute_query(conn, sql_query)
 
 
     @staticmethod
@@ -72,17 +67,16 @@ class Connection:
     @staticmethod
     def create_table(conn, file_path):
         """ Create a table in the database """
-        try:
-            create_table_query = Connection.read_file(file_path)
+        with open(file_path, 'r') as file:
+            create_table_query = file.read()
             cur = conn.cursor()
             cur.execute(create_table_query)
             conn.commit()
             cur.close()
-        except (Exception, psycopg2.DatabaseError) as error:
-            print(error)
 
     @staticmethod
     def execute_member_insertions(conn, file_path):
         """ Execute member insertions """
-        sql_query = Connection.read_file(file_path)
-        Connection.execute_query(conn, sql_query)
+        with open(file_path, 'r') as file:
+            sql_query = file.read()
+            Connection.execute_query(conn, sql_query)
