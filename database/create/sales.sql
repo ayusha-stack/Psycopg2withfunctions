@@ -1,4 +1,3 @@
-
 DROP TABLE sales CASCADE;
 
 CREATE TABLE sales(
